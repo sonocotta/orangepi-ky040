@@ -1,8 +1,6 @@
-![tests](https://github.com/raphaelyancey/pyKY040/workflows/tests/badge.svg)
+# OrangePI-KY040
 
-# pyKY040
-
-**High-level Python module for the KY040 rotary encoder and switch** on Raspberry Pi and similar boards that use `RPi.GPIO`
+**High-level Python module for the KY040 rotary encoder and switch** on Raspberry Pi and similar boards that use `OPi.GPIO`
 
 <img src="https://i.imgur.com/vgHjSoY.jpg" width="300" alt="KY-040 rotary encoder and switch">
 
@@ -36,7 +34,7 @@ pip install pyky040
 
 ```python
 # Import the module
-from pyky040 import pyky040
+from OrangePi_ky040 import pyky040
 
 # Define your callback
 def my_callback(scale_position):
@@ -68,7 +66,7 @@ As the `watch()` method runs an infinite polling loop, you might want to run it 
 
 ```python
 # Import the module and threading
-from pyky040 import pyky040
+from OrangePi_ky040 import pyky040
 import threading
 
 # Define your callback

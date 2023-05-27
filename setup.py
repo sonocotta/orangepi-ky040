@@ -8,23 +8,22 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='pyky040',
-    version='0.1.4',
+    name='OrangePi.ky040',
+    version='0.2.0',
     description='High-level interface for the KY040 rotary encoder and switch.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/raphaelyancey/pyKY040',
-    author='Raphael Yancey',
-    author_email='pypi@raphaelyancey.fr',
+    url='https://github.com/sonocotta/orangepi-ky040',
+    author='Andriy Malyshenko',
+    author_email='anriy@sonocotta.com',
     keywords='keyes rotary encoder switch ky040',
-    #py_modules=["pyky040"],
     packages=find_packages(),
-    install_requires=['RPi.GPIO'],
+    install_requires=['OPi.GPIO'],
     extras_require={
         "device": ["evdev"]
     },
     project_urls={
-        'Bug Reports': 'https://github.com/raphaelyancey/pyKY040/issues',
-        'Source': 'https://github.com/raphaelyancey/pyKY040',
+        'Bug Reports': 'https://github.com/sonocotta/orangepi-ky040/issues',
+        'Source': 'https://github.com/sonocotta/orangepi-ky040',
     },
 )

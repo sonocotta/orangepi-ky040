@@ -1,4 +1,5 @@
-from RPi import GPIO
+import orangepi.pc
+from OPi import GPIO
 from time import sleep, time
 import logging
 from threading import Timer
@@ -8,12 +9,6 @@ import warnings
 logging.basicConfig()
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG if getenv('DEBUG') == '1' else logging.INFO)
-
-try:
-    import evdev
-except Exception:
-    logging.info("The `evdev` package wasn't found, install it if you need to use the `device` mode.")
-
 
 class Encoder:
 
@@ -28,8 +23,6 @@ class Encoder:
     sw_triggered = False     # Used to debounce a long switch click (prevent multiple callback calls)
     latest_switch_press = None
 
-    device = None            # Device path (when used instead of GPIO polling)
-
     step = 1                 # Scale step from min to max
     max_counter = 100        # Scale max
     min_counter = 0          # Scale min
@@ -41,36 +34,27 @@ class Encoder:
     chg_callback = None      # Rotation callback (either way)
     sw_callback = None       # Switch pressed callback
 
-    def __init__(self, CLK=None, DT=None, SW=None, polling_interval=1, device=None):
+    def __init__(self, CLK=None, DT=None, SW=None, polling_interval=1):
 
-        if device is not None:
+        if not CLK or not DT:
+            raise BaseException("You must specify at least the CLK & DT pins")
 
-            try:
-                self.device = evdev.InputDevice(device)
-                logger.info("Please note that the encoder switch functionnality isn't handled in `device` mode yet.")
-            except OSError:
-                raise BaseException("The rotary encoder needs to be installed before use: https://github.com/raphaelyancey/pyky040#install-device")
+        assert isinstance(CLK, int)
+        assert isinstance(DT, int)
+        self.clk = CLK
+        self.dt = DT
+        GPIO.setwarnings(False)
+        GPIO.setmode(orangepi.pc.BCM)
+        GPIO.setup(self.clk, GPIO.IN)
+        GPIO.setup(self.dt, GPIO.IN)
 
-        else:
+        if SW is not None:
+            assert isinstance(SW, int)
+            self.sw = SW
+            GPIO.setup(self.sw, GPIO.IN)  # Pulled-up because KY-040 switch is shorted to ground when pressed
 
-            if not CLK or not DT:
-                raise BaseException("You must specify at least the CLK & DT pins")
-
-            assert isinstance(CLK, int)
-            assert isinstance(DT, int)
-            self.clk = CLK
-            self.dt = DT
-            GPIO.setmode(GPIO.BCM)
-            GPIO.setup(self.clk, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-            GPIO.setup(self.dt, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
-            if SW is not None:
-                assert isinstance(SW, int)
-                self.sw = SW
-                GPIO.setup(self.sw, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Pulled-up because KY-040 switch is shorted to ground when pressed
-
-            self.clk_last_state = GPIO.input(self.clk)
-            self.polling_interval = polling_interval
+        self.clk_last_state = GPIO.input(self.clk)
+        self.polling_interval = polling_interval
 
     def warnFloatDepreciation(self, i):
         if isinstance(i, float):
@@ -158,40 +142,31 @@ class Encoder:
 
     def watch(self):
 
-        if self.device is not None:
-            for event in self.device.read_loop():
-                if event.type == 2:
-                    if event.value == 1:
+        while True:
+            try:
+                # Switch part
+                if self.sw_callback:
+                    if GPIO.input(self.sw) == GPIO.LOW:
+                        self._switch_press()
+                    else:
+                        self._switch_release()
+
+                # Encoder part
+                clkState = GPIO.input(self.clk)
+                dtState = GPIO.input(self.dt)
+
+                if clkState != self.clk_last_state:
+                    if dtState != clkState:
                         self._clockwise_tick()
-                    elif event.value == -1:
+                    else:
                         self._counterclockwise_tick()
-        else:
 
-            while True:
-                try:
-                    # Switch part
-                    if self.sw_callback:
-                        if GPIO.input(self.sw) == GPIO.LOW:
-                            self._switch_press()
-                        else:
-                            self._switch_release()
+                self.clk_last_state = clkState
+                sleep(self.polling_interval / 1000)
 
-                    # Encoder part
-                    clkState = GPIO.input(self.clk)
-                    dtState = GPIO.input(self.dt)
-
-                    if clkState != self.clk_last_state:
-                        if dtState != clkState:
-                            self._clockwise_tick()
-                        else:
-                            self._counterclockwise_tick()
-
-                    self.clk_last_state = clkState
-                    sleep(self.polling_interval / 1000)
-
-                except BaseException as e:
-                    logger.info("Exiting...")
-                    logger.info(e)
-                    GPIO.cleanup()
-                    break
+            except BaseException as e:
+                logger.info("Exiting...")
+                logger.info(e)
+                GPIO.cleanup()
+                break
         return

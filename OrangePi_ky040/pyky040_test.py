@@ -2,18 +2,17 @@ import unittest
 from unittest.mock import patch, Mock, MagicMock
 from time import sleep
 
-MockRPi = MagicMock()
+MockOPi = MagicMock()
 evdev = MagicMock()
 modules = {
-    "RPi": MockRPi,
-    "RPi.GPIO": MockRPi.GPIO,
+    "OPi": MockOPi,
+    "OPi.GPIO": MockOPi.GPIO,
     "evdev": evdev
 }
 patcher = patch.dict("sys.modules", modules)
 patcher.start()
 
-import pyky040
-
+from OrangePi_ky040 import pyky040
 
 class TestEncoder(unittest.TestCase):
 
