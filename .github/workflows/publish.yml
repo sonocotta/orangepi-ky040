@@ -1,0 +1,44 @@
+name: Build and upload Package
+
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+    - master
+    - releases/*
+    - features/*  
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python ${{ matrix.python }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade setuptools twine OPi.GPIO
+
+    - name: Build package
+      working-directory: .
+      run: |
+        python3 setup.py build
+        python3 setup.py sdist
+
+    - name: Test
+      run: |
+        python3 OrangePi_ky040/pyky040_test.py
+  
+    - name: Publish package to PyPI
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/master')
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        skip-existing: true
+        print-hash: true
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        packages-dir: ./dist
