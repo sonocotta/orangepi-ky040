@@ -22,7 +22,7 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        python -m pip install --upgrade setuptools twine
+        python -m pip install --upgrade setuptools twine OPi.GPIO
 
     - name: Build package
       working-directory: .
