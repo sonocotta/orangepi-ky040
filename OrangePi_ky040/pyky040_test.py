@@ -12,7 +12,7 @@ modules = {
 patcher = patch.dict("sys.modules", modules)
 patcher.start()
 
-from OrangePi_ky040 import pyky040
+import pyky040
 
 class TestEncoder(unittest.TestCase):
 
